@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Encuesta</title>
+<meta name="theme-color" content="#14171C">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="status-bar" id="statusBar">
+    <span class="signal-dot"></span>
+    <span class="status-text" id="statusText">Sin conexión — <strong>tus respuestas se guardan igual</strong></span>
+    <span class="pending-badge" id="pendingBadge" style="display:none;"></span>
+  </div>
+
+  <main>
+    <header class="app-header">
+      <p class="eyebrow">Encuesta</p>
+      <h1>Título de la encuesta</h1>
+      <p class="subtitle">Descripción breve de para qué es esta encuesta.</p>
+    </header>
+
+    <div class="progress-track" id="progressTrack"></div>
+
+    <form id="surveyForm">
+      <div class="card" id="questionCard">
+        <!-- Preguntas se renderizan acá por JS -->
+      </div>
+
+      <div class="nav-row">
+        <button type="button" class="btn-back" id="btnBack">Atrás</button>
+        <button type="button" class="btn-next" id="btnNext" disabled>Siguiente</button>
+      </div>
+    </form>
+
+    <div class="card done-screen" id="doneScreen" style="display:none;">
+      <span class="signal-dot" style="margin: 0 auto 18px; display:block;"></span>
+      <h2>Respuestas guardadas</h2>
+      <p>Se guardaron en este dispositivo. Cuando haya conexión, se envían solas a la base de datos.</p>
+      <button class="btn-restart" id="btnRestart">Responder otra vez</button>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
