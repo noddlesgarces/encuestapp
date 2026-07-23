@@ -180,7 +180,7 @@ function renderCharts(rows) {
 
     const card = document.createElement("div");
     card.className = "chart-card";
-    card.innerHTML = `<h3>${QUESTION_LABELS[qKey]}</h3><canvas></canvas>`;
+    card.innerHTML = `<h3>${QUESTION_LABELS[qKey]}</h3><div class="chart-box"><canvas></canvas></div>`;
     els.chartsContainer.appendChild(card);
 
     const canvas = card.querySelector("canvas");
@@ -194,16 +194,18 @@ function renderCharts(rows) {
         datasets: [{
           data: values,
           backgroundColor: "#7DD3C0",
-          borderRadius: 6,
-          maxBarThickness: 40,
+          borderRadius: 5,
+          maxBarThickness: 28,
         }],
       },
       options: {
+        responsive: true,
+        maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-          x: { ticks: { color: "#9AA1AC" }, grid: { display: false } },
+          x: { ticks: { color: "#9AA1AC", font: { size: 11 } }, grid: { display: false } },
           y: {
-            ticks: { color: "#9AA1AC", stepSize: 1, precision: 0 },
+            ticks: { color: "#9AA1AC", stepSize: 1, precision: 0, font: { size: 11 } },
             grid: { color: "#2A2F38" },
             beginAtZero: true,
           },
