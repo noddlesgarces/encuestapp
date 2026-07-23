@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel · Respuestas</title>
+<meta name="theme-color" content="#14171C">
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="../styles.css">
+<link rel="stylesheet" href="panel.css">
+</head>
+<body>
+
+  <!-- ============ VISTA: LOGIN ============ -->
+  <main id="loginView" style="display:none;">
+    <header class="app-header">
+      <p class="eyebrow">Panel</p>
+      <h1>Acceso a resultados</h1>
+      <p class="subtitle">Ingresa tu correo y te mandamos un link para entrar. Sin contraseña.</p>
+    </header>
+
+    <div class="card">
+      <label class="field-label" for="emailInput">Correo</label>
+      <input type="email" id="emailInput" class="text-input" placeholder="tucorreo@ejemplo.com" autocomplete="email">
+      <button type="button" id="btnSendLink" class="btn-next" style="margin-top:16px; width:100%;">
+        Enviar link de acceso
+      </button>
+      <p class="hint-text" id="loginMsg"></p>
+    </div>
+  </main>
+
+  <!-- ============ VISTA: DASHBOARD ============ -->
+  <main id="dashboardView" style="display:none; max-width: 720px;">
+    <header class="app-header dash-header">
+      <div>
+        <p class="eyebrow">Panel</p>
+        <h1>Resultados de la encuesta</h1>
+      </div>
+      <button type="button" id="btnLogout" class="btn-back">Salir</button>
+    </header>
+
+    <div class="tabs">
+      <button type="button" class="tab-btn active" data-tab="tabla">Tabla</button>
+      <button type="button" class="tab-btn" data-tab="graficos">Gráficos</button>
+    </div>
+
+    <section id="tabTabla" class="tab-panel">
+      <div class="card table-wrap">
+        <p class="hint-text" id="tableStatus">Cargando...</p>
+        <div style="overflow-x:auto;">
+          <table id="responsesTable" class="data-table"></table>
+        </div>
+      </div>
+    </section>
+
+    <section id="tabGraficos" class="tab-panel" style="display:none;">
+      <div id="chartsContainer"></div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="panel.js"></script>
+</body>
+</html>

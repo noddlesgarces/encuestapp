@@ -41,6 +41,7 @@ const els = {
   statusBar: document.getElementById("statusBar"),
   statusText: document.getElementById("statusText"),
   pendingBadge: document.getElementById("pendingBadge"),
+  btnSync: document.getElementById("btnSync"),
 };
 
 /* ============================================================
@@ -192,8 +193,12 @@ function updatePendingBadge() {
   if (n > 0) {
     els.pendingBadge.style.display = "inline";
     els.pendingBadge.textContent = `${n} sin enviar`;
+    els.btnSync.style.display = "block";
+    els.btnSync.disabled = false;
+    els.btnSync.textContent = "Enviar respuestas pendientes";
   } else {
     els.pendingBadge.style.display = "none";
+    els.btnSync.style.display = "none";
   }
 }
 
@@ -214,6 +219,27 @@ function updateConnectionStatus() {
 
 window.addEventListener("online", updateConnectionStatus);
 window.addEventListener("offline", updateConnectionStatus);
+
+els.btnSync.addEventListener("click", async () => {
+  const before = getQueue().length;
+  els.btnSync.disabled = true;
+  els.btnSync.textContent = "Enviando...";
+
+  await trySync();
+
+  const after = getQueue().length;
+
+  if (after === 0) {
+    els.btnSync.textContent = "¡Enviado!";
+    setTimeout(updatePendingBadge, 1200);
+  } else if (after < before) {
+    els.btnSync.textContent = `Enviadas ${before - after}, faltan ${after}`;
+    els.btnSync.disabled = false;
+  } else {
+    els.btnSync.textContent = "Sin conexión, intenta de nuevo";
+    els.btnSync.disabled = false;
+  }
+});
 
 /* ============================================================
    INIT
