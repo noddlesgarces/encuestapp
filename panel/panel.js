@@ -53,7 +53,10 @@ els.btnSendLink.addEventListener("click", async () => {
 
   const { error } = await client.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: window.location.href },
+    options: {
+      emailRedirectTo: window.location.href,
+      shouldCreateUser: false, // nunca crea cuentas nuevas — solo entra gente ya invitada
+    },
   });
 
   els.btnSendLink.disabled = false;
