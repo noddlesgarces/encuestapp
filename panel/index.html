@@ -44,7 +44,10 @@
 
     <section id="tabTabla" class="tab-panel">
       <div class="card table-wrap">
-        <p class="hint-text" id="tableStatus">Cargando...</p>
+        <div class="table-toolbar">
+          <p class="hint-text" id="tableStatus">Cargando...</p>
+          <button type="button" id="btnExport" class="btn-export">Exportar CSV</button>
+        </div>
         <div class="table-scroll">
           <table id="responsesTable" class="data-table"></table>
         </div>

@@ -36,6 +36,7 @@ const els = {
   tabGraficos: document.getElementById("tabGraficos"),
   tableStatus: document.getElementById("tableStatus"),
   table: document.getElementById("responsesTable"),
+  btnExport: document.getElementById("btnExport"),
   chartsContainer: document.getElementById("chartsContainer"),
 };
 
@@ -140,6 +141,22 @@ async function loadData() {
   renderCharts(cachedRows);
 }
 
+const OPTION_COLORS = {
+  "Opción 1": "#7DD3C0",
+  "Opción 2": "#E8A96B",
+  "Opción 3": "#8AA9E8",
+  "Opción 4": "#D98AD9",
+};
+const FALLBACK_COLORS = ["#7DD3C0", "#E8A96B", "#8AA9E8", "#D98AD9", "#E8D06B", "#E88A8A"];
+
+function colorFor(value) {
+  if (OPTION_COLORS[value]) return OPTION_COLORS[value];
+  // color estable para cualquier otro texto, según su contenido
+  let hash = 0;
+  for (let i = 0; i < value.length; i++) hash = value.charCodeAt(i) + ((hash << 5) - hash);
+  return FALLBACK_COLORS[Math.abs(hash) % FALLBACK_COLORS.length];
+}
+
 function renderTable(rows) {
   const qKeys = Object.keys(QUESTION_LABELS);
 
@@ -147,7 +164,7 @@ function renderTable(rows) {
     <thead>
       <tr>
         <th>Fecha</th>
-        ${qKeys.map((k) => `<th>${QUESTION_LABELS[k]}</th>`).join("")}
+        ${qKeys.map((k, i) => `<th title="${QUESTION_LABELS[k]}">P${i + 1}</th>`).join("")}
       </tr>
     </thead>
   `;
@@ -157,7 +174,12 @@ function renderTable(rows) {
       ${rows.map((row) => `
         <tr>
           <td>${formatDate(row.creado_en)}</td>
-          ${qKeys.map((k) => `<td>${escapeHtml(row.respuestas?.[k] ?? "—")}</td>`).join("")}
+          ${qKeys.map((k) => {
+            const val = row.respuestas?.[k];
+            if (val === undefined || val === null) return "<td>—</td>";
+            const safe = escapeHtml(val);
+            return `<td><span class="opt-badge"><span class="opt-dot" style="background:${colorFor(val)}"></span>${safe}</span></td>`;
+          }).join("")}
         </tr>
       `).join("")}
     </tbody>
@@ -216,13 +238,53 @@ function renderCharts(rows) {
 }
 
 /* ============================================================
+   EXPORTAR CSV
+   ============================================================ */
+
+els.btnExport.addEventListener("click", () => {
+  if (cachedRows.length === 0) return;
+
+  const qKeys = Object.keys(QUESTION_LABELS);
+  const header = ["Fecha", ...qKeys.map((k) => QUESTION_LABELS[k])];
+
+  const csvRows = cachedRows.map((row) => {
+    const fecha = row.creado_en ? new Date(row.creado_en).toISOString() : "";
+    const respuestas = qKeys.map((k) => csvEscape(row.respuestas?.[k] ?? ""));
+    return [csvEscape(fecha), ...respuestas].join(",");
+  });
+
+  const csv = [header.map(csvEscape).join(","), ...csvRows].join("\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `respuestas_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+function csvEscape(value) {
+  const str = String(value);
+  if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
+/* ============================================================
    HELPERS
    ============================================================ */
 
 function formatDate(iso) {
   if (!iso) return "—";
   const d = new Date(iso);
-  return d.toLocaleString("es-CL", { dateStyle: "short", timeStyle: "short" });
+  return d.toLocaleString("es-CL", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function escapeHtml(str) {
