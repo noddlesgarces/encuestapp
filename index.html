@@ -24,30 +24,38 @@
   </button>
 
   <main>
-    <header class="app-header">
-      <p class="eyebrow">Encuesta</p>
-      <h1>Título de la encuesta</h1>
-      <p class="subtitle">Descripción breve de para qué es esta encuesta.</p>
-    </header>
+    <div class="card" id="errorScreen">
+      <p>Cargando...</p>
+    </div>
 
-    <div class="progress-track" id="progressTrack"></div>
+    <div id="mainContent" style="display:none;">
+      <header class="app-header">
+        <p class="eyebrow" id="surveyEyebrow">Encuesta</p>
+        <h1 id="surveyTitle">Título de la encuesta</h1>
+        <p class="subtitle" id="surveySubtitle"></p>
+      </header>
 
-    <form id="surveyForm">
-      <div class="card" id="questionCard">
-        <!-- Preguntas se renderizan acá por JS -->
+      <div class="progress-summary">
+        <p class="hint-text" id="progressText">0 de 0 respondidas</p>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+        </div>
       </div>
 
-      <div class="nav-row">
-        <button type="button" class="btn-back" id="btnBack">Atrás</button>
-        <button type="button" class="btn-next" id="btnNext" disabled>Siguiente</button>
-      </div>
-    </form>
+      <form id="surveyForm">
+        <div id="categoriesContainer"></div>
 
-    <div class="card done-screen" id="doneScreen" style="display:none;">
-      <span class="signal-dot" style="margin: 0 auto 18px; display:block;"></span>
-      <h2>Respuestas guardadas</h2>
-      <p>Se guardaron en este dispositivo. Cuando haya conexión, se envían solas a la base de datos.</p>
-      <button class="btn-restart" id="btnRestart">Responder otra vez</button>
+        <button type="button" class="btn-next btn-submit" id="btnSubmit" disabled style="width:100%; margin-top:20px;">
+          Enviar respuestas
+        </button>
+      </form>
+
+      <div class="card done-screen" id="doneScreen" style="display:none;">
+        <span class="signal-dot" style="margin: 0 auto 18px; display:block;"></span>
+        <h2>Respuestas guardadas</h2>
+        <p>Se guardaron en este dispositivo. Cuando haya conexión, se envían solas a la base de datos.</p>
+        <button class="btn-restart" id="btnRestart">Responder otra vez</button>
+      </div>
     </div>
   </main>
 

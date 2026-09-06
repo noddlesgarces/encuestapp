@@ -1,13 +1,8 @@
--- Permite que SOLO usuarios logueados (autenticados vía magic link)
--- puedan LEER las respuestas. El formulario público sigue sin poder leer nada,
--- solo insertar (eso ya estaba configurado en supabase-setup.sql).
-create policy "permitir leer a usuarios autenticados"
-on respuestas
-for select
-to authenticated
-using (true);
-
 -- ------------------------------------------------------------------
+-- Este archivo quedó solo como recordatorio de los pasos manuales
+-- (las políticas de "leer respuestas autenticado" ahora están en
+-- supabase-setup.sql junto con el resto del esquema).
+--
 -- PASOS MANUALES QUE FALTAN (se hacen desde el dashboard, no por SQL):
 --
 -- 1. Ve a Authentication → Sign In / Providers → Email

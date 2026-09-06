@@ -180,6 +180,97 @@
   height: 160px;
 }
 
+.btn-danger {
+  color: var(--warn);
+  border-color: var(--warn);
+}
+
+.btn-danger:hover { background: rgba(232, 169, 107, 0.08); }
+
+.survey-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  padding: 16px 18px;
+}
+
+.survey-item-info h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px;
+  margin: 0;
+}
+
+.survey-item-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.q-options-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.q-option-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-remove-opt {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink-dim);
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
+}
+
+.btn-remove-opt:hover { border-color: var(--warn); color: var(--warn); }
+
+.q-category-group {
+  margin-bottom: 22px;
+}
+
+.q-category-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+  margin: 0 0 10px;
+}
+
+.q-admin-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+  padding: 14px 16px;
+}
+
+.q-admin-texto {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.q-admin-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .empty-state {
   text-align: center;
   color: var(--ink-dim);

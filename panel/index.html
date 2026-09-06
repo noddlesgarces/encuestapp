@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Panel · Respuestas</title>
+<title>Panel · Encuestas</title>
 <meta name="theme-color" content="#14171C">
 <meta name="robots" content="noindex, nofollow">
 <link rel="stylesheet" href="../styles.css">
@@ -27,14 +27,67 @@
     </div>
   </main>
 
+  <!-- ============ VISTA: LISTA DE ENCUESTAS ============ -->
+  <main id="surveysView" style="display:none; max-width: 720px;">
+    <header class="app-header dash-header">
+      <div>
+        <p class="eyebrow">Panel</p>
+        <h1>Mis encuestas</h1>
+      </div>
+      <button type="button" id="btnLogout" class="btn-back">Salir</button>
+    </header>
+
+    <div class="card" style="margin-bottom: 18px;">
+      <label class="field-label" for="newSurveyTitle">Nueva encuesta</label>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="newSurveyTitle" class="text-input" placeholder="Título de la encuesta">
+        <button type="button" id="btnCreateSurvey" class="btn-next" style="flex-shrink:0;">Crear</button>
+      </div>
+      <p class="hint-text" id="createSurveyMsg"></p>
+    </div>
+
+    <div id="surveysList"></div>
+  </main>
+
+  <!-- ============ VISTA: EDITOR DE PREGUNTAS ============ -->
+  <main id="questionsView" style="display:none; max-width: 720px;">
+    <header class="app-header dash-header">
+      <div>
+        <p class="eyebrow">Preguntas</p>
+        <h1 id="questionsSurveyTitle">Encuesta</h1>
+      </div>
+      <button type="button" id="btnBackToSurveys1" class="btn-back">Volver</button>
+    </header>
+
+    <div class="card" style="margin-bottom: 18px;">
+      <label class="field-label" for="newQCategoria">Categoría</label>
+      <input type="text" id="newQCategoria" class="text-input" placeholder="Ej: Datos generales" list="categoriasList" style="margin-bottom:12px;">
+      <datalist id="categoriasList"></datalist>
+
+      <label class="field-label" for="newQTexto">Pregunta</label>
+      <input type="text" id="newQTexto" class="text-input" placeholder="Escribe la pregunta" style="margin-bottom:12px;">
+
+      <label class="field-label">Opciones</label>
+      <div id="newQOptions" class="q-options-editor"></div>
+      <button type="button" id="btnAddOption" class="btn-export" style="margin-top:8px;">+ Agregar opción</button>
+
+      <button type="button" id="btnAddQuestion" class="btn-next" style="width:100%; margin-top:16px;">
+        Agregar pregunta
+      </button>
+      <p class="hint-text" id="addQuestionMsg"></p>
+    </div>
+
+    <div id="questionsList"></div>
+  </main>
+
   <!-- ============ VISTA: DASHBOARD ============ -->
   <main id="dashboardView" style="display:none; max-width: 720px;">
     <header class="app-header dash-header">
       <div>
-        <p class="eyebrow">Panel</p>
-        <h1>Resultados de la encuesta</h1>
+        <p class="eyebrow">Resultados</p>
+        <h1 id="dashboardSurveyTitle">Encuesta</h1>
       </div>
-      <button type="button" id="btnLogout" class="btn-back">Salir</button>
+      <button type="button" id="btnBackToSurveys2" class="btn-back">Volver</button>
     </header>
 
     <div class="tabs">
