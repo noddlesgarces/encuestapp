@@ -399,10 +399,11 @@ async function moveQuestion(id, direction) {
   const a = cachedQuestions[index];
   const b = cachedQuestions[swapIndex];
 
-  const { error } = await client.from("preguntas").upsert([
-    { id: a.id, orden: b.orden },
-    { id: b.id, orden: a.orden },
+  const [{ error: errorA }, { error: errorB }] = await Promise.all([
+    client.from("preguntas").update({ orden: b.orden }).eq("id", a.id),
+    client.from("preguntas").update({ orden: a.orden }).eq("id", b.id),
   ]);
+  const error = errorA || errorB;
 
   if (error) {
     alert("No se pudo reordenar: " + error.message);
