@@ -553,30 +553,30 @@ els.btnExport.addEventListener("click", () => {
   const qIds = Object.keys(questionLabels);
   const header = ["Fecha", ...qIds.map((id) => questionLabels[id])];
 
-  const csvRows = cachedRows.map((row) => {
+  const rows = cachedRows.map((row) => {
     const fecha = row.creado_en ? formatDateForCsv(row.creado_en) : "";
-    const respuestas = qIds.map((id) => csvEscape(row.respuestas?.[id] ?? ""));
-    return [csvEscape(fecha), ...respuestas].join(",");
+    const respuestas = qIds.map((id) => row.respuestas?.[id] ?? "");
+    return [fecha, ...respuestas];
   });
 
-  const csv = [header.map(csvEscape).join(","), ...csvRows].join("\n");
-  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
+  const worksheetData = [header, ...rows];
+  const ws = XLSX.utils.aoa_to_sheet(worksheetData);
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${currentEncuestaTitulo || "respuestas"}_${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+  // Ancho de cada columna según su contenido más largo, con un mínimo y un máximo razonable
+  ws["!cols"] = header.map((_, colIndex) => {
+    const maxLen = worksheetData.reduce((max, r) => {
+      const val = r[colIndex] != null ? String(r[colIndex]) : "";
+      return Math.max(max, val.length);
+    }, 0);
+    return { wch: Math.min(Math.max(maxLen + 2, 14), 45) };
+  });
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Respuestas");
+
+  const nombreArchivo = `${currentEncuestaTitulo || "respuestas"}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+  XLSX.writeFile(wb, nombreArchivo);
 });
-
-function csvEscape(value) {
-  const str = String(value);
-  if (str.includes(",") || str.includes('"') || str.includes("\n")) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
-}
 
 /* ============================================================
    HELPERS
