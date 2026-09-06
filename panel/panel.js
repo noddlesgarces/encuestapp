@@ -77,7 +77,8 @@ els.btnSendLink.addEventListener("click", async () => {
   els.btnSendLink.textContent = "Enviar link de acceso";
 
   if (error) {
-    setMsg(els.loginMsg, "No se pudo enviar el link. Si tu correo no está autorizado, pide acceso.", "error");
+    console.error(error);
+    setMsg(els.loginMsg, `Error: ${error.message} (código: ${error.status || error.code || "?"})`, "error");
   } else {
     setMsg(els.loginMsg, "Listo, revisa tu correo y toca el link para entrar.", "success");
   }
