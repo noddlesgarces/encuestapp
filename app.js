@@ -167,9 +167,9 @@ function renderQuestion(q) {
     <div class="q-block">
       <p class="q-title">${escapeHtml(q.texto)}</p>
       <div class="options">
-        ${opciones.map((opt) => `
-          <label class="option ${answers[q.id] === opt ? "selected" : ""}">
-            <input type="radio" name="${q.id}" value="${escapeAttr(opt)}" ${answers[q.id] === opt ? "checked" : ""}>
+        ${opciones.map((opt, idx) => `
+          <label class="option ${answers[q.id] === String(idx) ? "selected" : ""}">
+            <input type="radio" name="${q.id}" value="${idx}" ${answers[q.id] === String(idx) ? "checked" : ""}>
             <span>${escapeHtml(opt)}</span>
           </label>
         `).join("")}
@@ -190,8 +190,19 @@ function updateProgress() {
    ENVÍO
    ============================================================ */
 
+function buildRespuestasParaEnviar() {
+  const resultado = {};
+  preguntas.forEach((q) => {
+    const idx = answers[q.id];
+    if (idx === undefined) return;
+    const opciones = Array.isArray(q.opciones) ? q.opciones : [];
+    resultado[q.id] = opciones[Number(idx)];
+  });
+  return resultado;
+}
+
 els.btnSubmit.addEventListener("click", () => {
-  saveResponseLocally(answers);
+  saveResponseLocally(buildRespuestasParaEnviar());
   showDone();
 });
 
