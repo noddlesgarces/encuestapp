@@ -1,6 +1,6 @@
 // Nombre de la caché — súbelo (v2, v3...) cada vez que cambies estos archivos
 // para forzar que los dispositivos ya instalados bajen la versión nueva.
-const CACHE_NAME = "encuesta-cache-v1";
+const CACHE_NAME = "encuesta-cache-v3";
 
 const APP_SHELL = [
   "./",
@@ -39,9 +39,11 @@ self.addEventListener("activate", (event) => {
 // (por ejemplo, el endpoint donde se sincronizan las respuestas, que NO se cachea)
 self.addEventListener("fetch", (event) => {
   const { request } = event;
+  const url = new URL(request.url);
 
-  // Solo aplicamos cache-first a peticiones GET del mismo origen
-  if (request.method !== "GET" || new URL(request.url).origin !== self.location.origin) {
+  // El panel de admin NUNCA se cachea: siempre debe cargar la versión más nueva.
+  // Todo lo demás (el formulario público) sigue con cache-first para funcionar offline.
+  if (request.method !== "GET" || url.origin !== self.location.origin || url.pathname.startsWith("/panel/")) {
     return;
   }
 
