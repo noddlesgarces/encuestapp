@@ -554,7 +554,7 @@ els.btnExport.addEventListener("click", () => {
   const header = ["Fecha", ...qIds.map((id) => questionLabels[id])];
 
   const csvRows = cachedRows.map((row) => {
-    const fecha = row.creado_en ? new Date(row.creado_en).toISOString() : "";
+    const fecha = row.creado_en ? formatDateForCsv(row.creado_en) : "";
     const respuestas = qIds.map((id) => csvEscape(row.respuestas?.[id] ?? ""));
     return [csvEscape(fecha), ...respuestas].join(",");
   });
@@ -581,6 +581,12 @@ function csvEscape(value) {
 /* ============================================================
    HELPERS
    ============================================================ */
+
+function formatDateForCsv(iso) {
+  const d = new Date(iso);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 function formatDate(iso) {
   if (!iso) return "—";
