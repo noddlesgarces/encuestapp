@@ -7,9 +7,12 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const RESPUESTAS_ENDPOINT = `${SUPABASE_URL}/rest/v1/respuestas`;
 
-// id de la encuesta a mostrar, viene de la URL: index.html?e=<uuid>
+// id de la encuesta a mostrar: por query (?e=<uuid>) o por slug en la ruta (/anova)
 const params = new URLSearchParams(window.location.search);
 const ENCUESTA_ID = params.get("e");
+const ENCUESTA_SLUG = !ENCUESTA_ID
+  ? window.location.pathname.replace(/^\/+|\/+$/g, "")
+  : "";
 
 const STORAGE_QUEUE_KEY = "encuesta_pendientes";
 
@@ -63,17 +66,18 @@ async function fetchJson(path) {
   return res.json();
 }
 
+let resolvedEncuestaId = ENCUESTA_ID;
+
 async function init() {
-  if (!ENCUESTA_ID) {
+  if (!ENCUESTA_ID && !ENCUESTA_SLUG) {
     showError("Este link no incluye una encuesta. Pide el link correcto a quien te lo compartió.");
     return;
   }
 
   try {
-    const [encuestas, preguntasData] = await Promise.all([
-      fetchJson(`encuestas?id=eq.${ENCUESTA_ID}&select=*`),
-      fetchJson(`preguntas?encuesta_id=eq.${ENCUESTA_ID}&select=*&order=orden.asc`),
-    ]);
+    const encuestas = ENCUESTA_ID
+      ? await fetchJson(`encuestas?id=eq.${ENCUESTA_ID}&select=*`)
+      : await fetchJson(`encuestas?slug=eq.${encodeURIComponent(ENCUESTA_SLUG)}&select=*`);
 
     if (!encuestas.length) {
       showError("No encontramos esta encuesta. Puede que haya sido eliminada.");
@@ -81,7 +85,9 @@ async function init() {
     }
 
     encuesta = encuestas[0];
-    preguntas = preguntasData;
+    resolvedEncuestaId = encuesta.id;
+
+    preguntas = await fetchJson(`preguntas?encuesta_id=eq.${resolvedEncuestaId}&select=*&order=orden.asc`);
 
     if (!preguntas.length) {
       showError("Esta encuesta todavía no tiene preguntas.");
@@ -732,7 +738,7 @@ function saveResponseLocally(data) {
   }
   queue.push({
     id: crypto.randomUUID(),
-    encuesta_id: ENCUESTA_ID,
+    encuesta_id: resolvedEncuestaId,
     respuestas: payload,
     creado_en: new Date().toISOString(),
   });
@@ -842,7 +848,7 @@ function escapeAttr(str) {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").catch((err) => {
+    navigator.serviceWorker.register("/sw.js").catch((err) => {
       console.error("Error registrando service worker:", err);
     });
   });

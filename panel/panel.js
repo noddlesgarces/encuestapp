@@ -26,6 +26,7 @@ const els = {
   btnLogout: document.getElementById("btnLogout"),
 
   newSurveyTitle: document.getElementById("newSurveyTitle"),
+  newSurveySlug: document.getElementById("newSurveySlug"),
   newSurveyLogo: document.getElementById("newSurveyLogo"),
   newSurveyBanner: document.getElementById("newSurveyBanner"),
   newSurveyColor: document.getElementById("newSurveyColor"),
@@ -163,6 +164,7 @@ els.btnCreateSurvey.addEventListener("click", async () => {
   els.btnCreateSurvey.disabled = true;
   const { error } = await client.from("encuestas").insert({
     titulo,
+    slug: els.newSurveySlug.value.trim() || null,
     logo_url: els.newSurveyLogo.value.trim() || null,
     banner_url: els.newSurveyBanner.value.trim() || null,
     color_primario: els.newSurveyColor.value.trim() || null,
@@ -176,6 +178,7 @@ els.btnCreateSurvey.addEventListener("click", async () => {
   }
 
   els.newSurveyTitle.value = "";
+  els.newSurveySlug.value = "";
   els.newSurveyLogo.value = "";
   els.newSurveyBanner.value = "";
   els.newSurveyColor.value = "";

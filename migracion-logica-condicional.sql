@@ -30,9 +30,11 @@ alter table encuestas
   add column if not exists color_primario text,
   add column if not exists tema text not null default 'oscuro',
   add column if not exists mostrar_identificacion boolean not null default false,
-  add column if not exists texto_consentimiento text;
+  add column if not exists texto_consentimiento text,
+  add column if not exists slug text unique;
 
 -- tema esperado: 'oscuro' (default, el look original) | 'claro'
+-- slug: link amigable, ej. "anova" → https://tusitio.vercel.app/anova
 
 -- Nada más que correr. Las políticas de RLS ya existentes
 -- (select público, insert/update/delete solo authenticated)
