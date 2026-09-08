@@ -206,7 +206,7 @@ h1 {
 
 .option.selected {
   border-color: var(--accent);
-  background: rgba(125, 211, 192, 0.08);
+  background: var(--accent-tint, rgba(125, 211, 192, 0.08));
 }
 
 .option span {
@@ -441,6 +441,15 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
   min-height: 90px;
 }
 
+.select-input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6l4 4 4-4' stroke='%239AA1AC' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
 .otro-field {
   margin-top: 10px;
 }
@@ -481,7 +490,7 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .escala-opt.selected {
   border-color: var(--accent);
-  background: rgba(125, 211, 192, 0.08);
+  background: var(--accent-tint, rgba(125, 211, 192, 0.08));
   color: var(--ink);
 }
 

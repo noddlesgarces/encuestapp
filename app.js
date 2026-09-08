@@ -123,10 +123,20 @@ function showError(msg) {
    ============================================================ */
 
 function applyBranding() {
+  if (encuesta.tema === "claro") {
+    document.documentElement.style.setProperty("--bg", "#F7F8FA");
+    document.documentElement.style.setProperty("--bg-raised", "#FFFFFF");
+    document.documentElement.style.setProperty("--line", "#E3E6EB");
+    document.documentElement.style.setProperty("--ink", "#1A1D23");
+    document.documentElement.style.setProperty("--ink-dim", "#6B7280");
+  }
+
   if (encuesta.color_primario) {
     document.documentElement.style.setProperty("--accent", encuesta.color_primario);
     document.documentElement.style.setProperty("--accent-dim", shade(encuesta.color_primario, -0.35));
     document.documentElement.style.setProperty("--accent-fg", contrastColor(encuesta.color_primario));
+    const { r, g, b } = hexToRgb(encuesta.color_primario);
+    document.documentElement.style.setProperty("--accent-tint", `rgba(${r}, ${g}, ${b}, 0.1)`);
   }
 
   if (encuesta.banner_url || encuesta.logo_url) {
@@ -381,6 +391,7 @@ function renderQuestion(q) {
     case "fecha": return renderTexto(q, "date");
     case "escala": return renderEscala(q);
     case "matriz": return renderMatriz(q);
+    case "seleccion": return renderSeleccion(q);
     default: return renderOpcionUnica(q);
   }
 }
@@ -392,6 +403,31 @@ function renderOtroInput(q, mostrar) {
     <div class="otro-field" style="${mostrar ? "" : "display:none;"}" data-otro-de="${q.id}">
       <input type="text" class="text-input otro-input" data-otro-input="${q.id}"
         placeholder="¿Cuál?" value="${escapeAttr(val)}">
+    </div>
+  `;
+}
+
+function renderSeleccion(q) {
+  const opciones = getOptionsFor(q);
+  const seleccion = answers[q.id];
+  const textoSel = seleccion !== undefined ? opciones[Number(seleccion)] : undefined;
+  const mostrarOtro = disparaOtro(q, textoSel);
+
+  if (esCascadaTexto(q)) return renderTexto(q, "text");
+  if (!opciones.length) {
+    return `<div class="q-block"><p class="q-title">${escapeHtml(q.texto)}</p><p class="hint-text">Responde la pregunta anterior primero.</p></div>`;
+  }
+
+  return `
+    <div class="q-block">
+      <p class="q-title">${escapeHtml(q.texto)}</p>
+      <select class="text-input select-input" data-seleccion-de="${q.id}">
+        <option value="" ${seleccion === undefined ? "selected" : ""} disabled>Selecciona una opción</option>
+        ${opciones.map((opt, idx) => `
+          <option value="${idx}" ${seleccion === String(idx) ? "selected" : ""}>${escapeHtml(opt)}</option>
+        `).join("")}
+      </select>
+      ${renderOtroInput(q, mostrarOtro)}
     </div>
   `;
 }
@@ -542,6 +578,13 @@ function wireQuestionInputs() {
       const arr = new Set(answers[qid] || []);
       if (input.checked) arr.add(input.value); else arr.delete(input.value);
       answers[qid] = Array.from(arr);
+      renderCategories();
+    });
+  });
+
+  els.categories.querySelectorAll("[data-seleccion-de]").forEach((select) => {
+    select.addEventListener("change", () => {
+      answers[select.dataset.seleccionDe] = select.value;
       renderCategories();
     });
   });
