@@ -24,9 +24,8 @@ let encuesta = null;
 let preguntas = []; // [{id, categoria, texto, opciones, tipo, mostrar_si, salta_a, opciones_por, matriz_filas, ...}]
 let categorias = []; // nombres de categoría en orden de aparición
 let answers = {}; // { [pregunta_id]: valor } — el "valor" depende del tipo
-let openCategoria = null; // qué categoría está desplegada
 let identificacion = { nombre: "", correo: "" };
-let encuestaTerminadaPorSalto = false; // true si una respuesta llevó a "FIN"
+let currentIndex = 0; // posición del paso actual dentro del wizard
 
 const els = {
   main: document.getElementById("mainContent"),
@@ -34,11 +33,10 @@ const els = {
   title: document.getElementById("surveyTitle"),
   subtitle: document.getElementById("surveySubtitle"),
   brandBlock: document.getElementById("brandBlock"),
-  idBlock: document.getElementById("idBlock"),
   form: document.getElementById("surveyForm"),
   categories: document.getElementById("categoriesContainer"),
-  progressText: document.getElementById("progressText"),
-  progressFill: document.getElementById("progressFill"),
+  progressTrack: document.getElementById("progressTrack"),
+  btnBack: document.getElementById("btnBack"),
   btnSubmit: document.getElementById("btnSubmit"),
   done: document.getElementById("doneScreen"),
   endScreen: document.getElementById("endScreen"),
@@ -99,7 +97,6 @@ async function init() {
       const cat = p.categoria || "General";
       if (!categorias.includes(cat)) categorias.push(cat);
     });
-    openCategoria = categorias[0];
 
     applyBranding();
 
@@ -108,11 +105,9 @@ async function init() {
     els.subtitle.textContent = encuesta.descripcion || "";
     els.subtitle.style.display = encuesta.descripcion ? "block" : "none";
 
-    renderIdentificacion();
-
     els.errorScreen.style.display = "none";
     els.main.style.display = "block";
-    renderCategories();
+    renderStep();
   } catch (err) {
     console.error(err);
     showError("No se pudo cargar la encuesta. Revisa tu conexión e intenta de nuevo.");
@@ -174,43 +169,6 @@ function hexToRgb(hex) {
 }
 
 /* ============================================================
-   IDENTIFICACIÓN OPCIONAL (nombre / correo) — antes del consentimiento
-   ============================================================ */
-
-function renderIdentificacion() {
-  const partes = [];
-
-  if (encuesta.texto_consentimiento) {
-    partes.push(`<div class="card id-card"><p class="hint-text" style="color:var(--ink); line-height:1.5;">${escapeHtml(encuesta.texto_consentimiento)}</p></div>`);
-  }
-
-  if (encuesta.mostrar_identificacion) {
-    partes.push(`
-      <div class="card id-card">
-        <p class="id-hint">Estos datos son opcionales.</p>
-        <label class="field-label">Nombre</label>
-        <input type="text" class="text-input" id="idNombre" placeholder="Tu nombre">
-        <label class="field-label" style="margin-top:12px;">Correo electrónico</label>
-        <input type="email" class="text-input" id="idCorreo" placeholder="tu@correo.cl">
-      </div>
-    `);
-  }
-
-  if (!partes.length) {
-    els.idBlock.style.display = "none";
-    return;
-  }
-
-  els.idBlock.style.display = "block";
-  els.idBlock.innerHTML = partes.join("");
-
-  const idNombre = document.getElementById("idNombre");
-  const idCorreo = document.getElementById("idCorreo");
-  if (idNombre) idNombre.addEventListener("input", (e) => { identificacion.nombre = e.target.value; });
-  if (idCorreo) idCorreo.addEventListener("input", (e) => { identificacion.correo = e.target.value; });
-}
-
-/* ============================================================
    LÓGICA CONDICIONAL — visibilidad, cascadas y saltos
    ============================================================ */
 
@@ -238,7 +196,7 @@ function getOptionsFor(q) {
     const padre = findPregunta(q.opciones_por.pregunta_id);
     const valorPadre = answerText(padre);
     const rama = valorPadre !== undefined ? q.opciones_por.mapa[valorPadre] : undefined;
-    if (rama === "__texto__" || rama === undefined) return [];
+    if (rama === "__texto__" || rama === "__omitir__" || rama === undefined) return [];
     return rama;
   }
   return Array.isArray(q.opciones) ? q.opciones : [];
@@ -251,6 +209,16 @@ function esCascadaTexto(q) {
   const valorPadre = answerText(padre);
   const rama = valorPadre !== undefined ? q.opciones_por.mapa[valorPadre] : undefined;
   return rama === "__texto__";
+}
+
+// true si, según la cascada, esta pregunta no debe mostrarse en absoluto
+// (ej: ya se preguntó "¿cuál?" en la pregunta anterior mediante otro_trigger)
+function esCascadaOmitida(q) {
+  if (!q.opciones_por || !q.opciones_por.pregunta_id) return false;
+  const padre = findPregunta(q.opciones_por.pregunta_id);
+  const valorPadre = answerText(padre);
+  const rama = valorPadre !== undefined ? q.opciones_por.mapa[valorPadre] : undefined;
+  return rama === "__omitir__";
 }
 
 // Categorías que deben saltarse según respuestas ya dadas, y si la encuesta debe terminar antes
@@ -283,6 +251,7 @@ function computeSkip() {
 
 function isVisible(q, skipped) {
   if (skipped.has(q.categoria)) return false;
+  if (esCascadaOmitida(q)) return false;
   if (q.mostrar_si && q.mostrar_si.pregunta_id) {
     const padre = findPregunta(q.mostrar_si.pregunta_id);
     const val = answerText(padre);
@@ -331,62 +300,78 @@ function otroFalta(q, valorSeleccionado) {
 }
 
 /* ============================================================
-   RENDER — acordeón por categoría
+   RENDER — wizard, un paso (pregunta) a la vez
    ============================================================ */
 
-function preguntasDe(categoria, visibles) {
-  return preguntas.filter((p) => (p.categoria || "General") === categoria && visibles.has(p.id));
+// Arma la lista de pasos visibles en el orden actual, insertando el
+// paso de identificación (nombre/correo) justo después del consentimiento
+function buildSteps() {
+  const { skipped, endNow } = computeSkip();
+  const steps = preguntas.filter((p) => isVisible(p, skipped));
+
+  if (encuesta.mostrar_identificacion) {
+    const primeraCategoria = categorias[0];
+    let insertAt = steps.findIndex((p) => p.categoria !== primeraCategoria);
+    if (insertAt === -1) insertAt = steps.length;
+    steps.splice(insertAt, 0, {
+      id: "__identificacion__",
+      tipo: "identificacion",
+      categoria: primeraCategoria,
+      texto: "",
+      requerida: false,
+    });
+  }
+
+  return { steps, endNow };
 }
 
-function renderCategories() {
-  const { skipped, endNow } = computeSkip();
+function isStepAnswered(step) {
+  if (step.tipo === "identificacion") return true; // opcional, nunca bloquea
+  return isAnswered(step);
+}
 
-  if (endNow) {
-    encuestaTerminadaPorSalto = true;
-    showEndScreen();
-    return;
-  }
-  encuestaTerminadaPorSalto = false;
+function renderStep() {
+  const { steps } = buildSteps();
+
   els.endScreen.style.display = "none";
   els.form.style.display = "block";
 
-  const visiblesSet = new Set(preguntas.filter((p) => isVisible(p, skipped)).map((p) => p.id));
-  const catsVisibles = categorias.filter((c) => !skipped.has(c) && preguntasDe(c, visiblesSet).length);
+  currentIndex = Math.max(0, Math.min(currentIndex, steps.length - 1));
+  const step = steps[currentIndex];
+  const esPrimerPaso = step.categoria === categorias[0];
 
-  els.categories.innerHTML = catsVisibles.map((cat) => {
-    const qs = preguntasDe(cat, visiblesSet);
-    const respondidas = qs.filter((q) => isAnswered(q)).length;
-    const isOpen = openCategoria === cat;
-
-    return `
-      <div class="cat-section ${isOpen ? "open" : ""}" data-cat="${escapeAttr(cat)}">
-        <button type="button" class="cat-header">
-          <span class="cat-name">${escapeHtml(cat)}</span>
-          <span class="cat-meta">
-            <span class="cat-count">${respondidas}/${qs.length}</span>
-            <svg class="cat-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </span>
-        </button>
-        <div class="cat-body">
-          ${qs.map((q) => renderQuestion(q)).join("")}
-        </div>
-      </div>
-    `;
+  els.progressTrack.innerHTML = steps.map((_, i) => {
+    const cls = i < currentIndex ? "done" : i === currentIndex ? "current" : "";
+    return `<span class="seg ${cls}"></span>`;
   }).join("");
 
-  els.categories.querySelectorAll(".cat-header").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const section = btn.closest(".cat-section");
-      const cat = section.dataset.cat;
-      openCategoria = openCategoria === cat ? null : cat;
-      renderCategories();
-    });
-  });
+  const consentimientoHtml = (esPrimerPaso && encuesta.texto_consentimiento && step.tipo !== "identificacion")
+    ? `<div class="consent-text">${encuesta.texto_consentimiento.split(/\n\s*\n/).map((p) => `<p>${escapeHtml(p.trim())}</p>`).join("")}</div>`
+    : "";
+
+  els.categories.innerHTML = `
+    <div class="card">
+      <p class="q-index">Pregunta ${currentIndex + 1} de ${steps.length}</p>
+      ${consentimientoHtml}
+      ${step.tipo === "identificacion" ? renderIdentificacionStep() : renderQuestion(step)}
+    </div>
+  `;
 
   wireQuestionInputs();
-  updateProgress(visiblesSet);
+
+  els.btnBack.style.visibility = currentIndex === 0 ? "hidden" : "visible";
+  els.btnSubmit.textContent = currentIndex === steps.length - 1 ? "Enviar respuestas" : "Siguiente";
+  els.btnSubmit.disabled = !isStepAnswered(step);
+}
+
+function renderIdentificacionStep() {
+  return `
+    <p class="hint-text" style="margin:-8px 0 16px;">Estos datos son opcionales.</p>
+    <label class="field-label">Nombre</label>
+    <input type="text" class="text-input" id="idNombre" placeholder="Tu nombre" value="${escapeAttr(identificacion.nombre)}">
+    <label class="field-label" style="margin-top:12px;">Correo electrónico</label>
+    <input type="email" class="text-input" id="idCorreo" placeholder="tu@correo.cl" value="${escapeAttr(identificacion.correo)}">
+  `;
 }
 
 function renderQuestion(q) {
@@ -571,10 +556,15 @@ function renderMatriz(q) {
 }
 
 function wireQuestionInputs() {
+  const idNombre = document.getElementById("idNombre");
+  const idCorreo = document.getElementById("idCorreo");
+  if (idNombre) idNombre.addEventListener("input", (e) => { identificacion.nombre = e.target.value; });
+  if (idCorreo) idCorreo.addEventListener("input", (e) => { identificacion.correo = e.target.value; });
+
   els.categories.querySelectorAll("input[type=radio]").forEach((input) => {
     input.addEventListener("change", () => {
       answers[input.name] = input.value;
-      renderCategories();
+      renderStep();
     });
   });
 
@@ -584,43 +574,38 @@ function wireQuestionInputs() {
       const arr = new Set(answers[qid] || []);
       if (input.checked) arr.add(input.value); else arr.delete(input.value);
       answers[qid] = Array.from(arr);
-      renderCategories();
+      renderStep();
     });
   });
 
   els.categories.querySelectorAll("[data-seleccion-de]").forEach((select) => {
     select.addEventListener("change", () => {
       answers[select.dataset.seleccionDe] = select.value;
-      renderCategories();
+      renderStep();
     });
   });
 
   els.categories.querySelectorAll("[data-texto-de]").forEach((input) => {
     input.addEventListener("input", () => {
       answers[input.dataset.textoDe] = input.value;
+      updateNextButtonState();
     });
-    input.addEventListener("blur", () => updateProgress());
   });
 
   els.categories.querySelectorAll("[data-otro-input]").forEach((input) => {
     input.addEventListener("input", () => {
       answers[`${input.dataset.otroInput}::otro`] = input.value;
+      updateNextButtonState();
     });
-    input.addEventListener("blur", () => updateProgress());
   });
 }
 
-function updateProgress(visiblesSet) {
-  const visibles = visiblesSet || (() => {
-    const { skipped } = computeSkip();
-    return new Set(preguntas.filter((p) => isVisible(p, skipped)).map((p) => p.id));
-  })();
-  const requeridas = preguntas.filter((q) => visibles.has(q.id) && q.requerida !== false);
-  const total = requeridas.length;
-  const respondidas = requeridas.filter((q) => isAnswered(q)).length;
-  els.progressText.textContent = `${respondidas} de ${total} respondidas`;
-  els.progressFill.style.width = `${total ? (respondidas / total) * 100 : 0}%`;
-  els.btnSubmit.disabled = respondidas < total;
+// Habilita/deshabilita "Siguiente" sin volver a dibujar el paso (para no
+// perder el foco mientras la persona está escribiendo en un campo)
+function updateNextButtonState() {
+  const { steps } = buildSteps();
+  const step = steps[Math.max(0, Math.min(currentIndex, steps.length - 1))];
+  if (step) els.btnSubmit.disabled = !isStepAnswered(step);
 }
 
 /* ============================================================
@@ -689,9 +674,28 @@ function buildRespuestasParaEnviar() {
 }
 
 els.btnSubmit.addEventListener("click", () => {
+  const { steps, endNow } = buildSteps();
+
+  if (endNow) {
+    showEndScreen();
+    return;
+  }
+
+  if (currentIndex < steps.length - 1) {
+    currentIndex++;
+    renderStep();
+    return;
+  }
   const payload = buildRespuestasParaEnviar();
   saveResponseLocally(payload);
   showDone();
+});
+
+els.btnBack.addEventListener("click", () => {
+  if (currentIndex > 0) {
+    currentIndex--;
+    renderStep();
+  }
 });
 
 function showDone() {
@@ -702,13 +706,11 @@ function showDone() {
 function resetSurvey() {
   answers = {};
   identificacion = { nombre: "", correo: "" };
-  openCategoria = categorias[0];
-  encuestaTerminadaPorSalto = false;
-  renderIdentificacion();
+  currentIndex = 0;
   els.done.style.display = "none";
   els.endScreen.style.display = "none";
   els.form.style.display = "block";
-  renderCategories();
+  renderStep();
 }
 
 els.btnRestart.addEventListener("click", resetSurvey);

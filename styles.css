@@ -131,6 +131,22 @@ h1 {
   color: var(--ink-dim);
   font-size: 14px;
   margin: 0;
+  white-space: pre-line;
+}
+
+.consent-text {
+  text-align: justify;
+  color: var(--ink);
+  line-height: 1.55;
+  font-size: 14px;
+}
+
+.consent-text p {
+  margin: 0 0 12px;
+}
+
+.consent-text p:last-child {
+  margin-bottom: 0;
 }
 
 .progress-track {
@@ -360,13 +376,6 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .cat-section.open .cat-body {
   display: flex;
-}
-
-.q-block .q-title {
-  font-size: 15px;
-  font-weight: 600;
-  margin: 0 0 12px;
-  line-height: 1.4;
 }
 
 .btn-submit {

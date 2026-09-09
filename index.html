@@ -37,21 +37,17 @@
         <p class="subtitle" id="surveySubtitle"></p>
       </header>
 
-      <div id="idBlock" style="display:none;"></div>
-
-      <div class="progress-summary">
-        <p class="hint-text" id="progressText">0 de 0 respondidas</p>
-        <div class="progress-bar-track">
-          <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
-        </div>
-      </div>
+      <div class="progress-track" id="progressTrack"></div>
 
       <form id="surveyForm">
         <div id="categoriesContainer"></div>
 
-        <button type="button" class="btn-next btn-submit" id="btnSubmit" disabled style="width:100%; margin-top:20px;">
-          Enviar respuestas
-        </button>
+        <div class="nav-row">
+          <button type="button" class="btn-back" id="btnBack">Atrás</button>
+          <button type="button" class="btn-next" id="btnSubmit" disabled>
+            Siguiente
+          </button>
+        </div>
       </form>
 
       <div class="card done-screen" id="doneScreen" style="display:none;">

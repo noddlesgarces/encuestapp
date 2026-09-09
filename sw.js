@@ -1,6 +1,6 @@
 // Nombre de la caché — súbelo (v2, v3...) cada vez que cambies estos archivos
 // para forzar que los dispositivos ya instalados bajen la versión nueva.
-const CACHE_NAME = "encuesta-cache-v5";
+const CACHE_NAME = "encuesta-cache-v6";
 
 const APP_SHELL = [
   "./",
