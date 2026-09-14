@@ -262,7 +262,8 @@ async function handleSurveyAction(btn) {
   }
 
   if (action === "borrar") {
-    if (!confirm("¿Eliminar esta encuesta? Se borran también sus preguntas y respuestas.")) return;
+    const confirmacion = prompt('Esto borra la encuesta, sus preguntas y sus respuestas. Para confirmar, escribe "Eliminar":');
+    if (confirmacion !== "Eliminar") return;
     const { error } = await client.from("encuestas").delete().eq("id", id);
     if (error) {
       alert("No se pudo eliminar: " + error.message);
@@ -528,9 +529,35 @@ async function loadResponses() {
 
 const OPTION_COLORS_FALLBACK = ["#7DD3C0", "#E8A96B", "#8AA9E8", "#D98AD9", "#E8D06B", "#E88A8A"];
 
+// Convierte cualquier forma de respuesta (texto, lista o matriz) en un
+// texto legible para mostrar en la tabla
+function displayValue(val) {
+  if (val === undefined || val === null) return null;
+  if (Array.isArray(val)) return val.join(", ");
+  if (typeof val === "object") return Object.entries(val).map(([k, v]) => `${k}: ${v}`).join(" · ");
+  return String(val);
+}
+
+// Suma una respuesta al conteo de un gráfico. Las de selección múltiple
+// cuentan cada opción marcada por separado; las de matriz, cada fila.
+function addToCounts(counts, val) {
+  if (val === undefined || val === null) return;
+  if (Array.isArray(val)) {
+    val.forEach((v) => { counts[v] = (counts[v] || 0) + 1; });
+  } else if (typeof val === "object") {
+    Object.entries(val).forEach(([fila, valor]) => {
+      const label = `${fila} — ${valor}`;
+      counts[label] = (counts[label] || 0) + 1;
+    });
+  } else {
+    counts[val] = (counts[val] || 0) + 1;
+  }
+}
+
 function colorFor(value) {
+  const str = String(value);
   let hash = 0;
-  for (let i = 0; i < value.length; i++) hash = value.charCodeAt(i) + ((hash << 5) - hash);
+  for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
   return OPTION_COLORS_FALLBACK[Math.abs(hash) % OPTION_COLORS_FALLBACK.length];
 }
 
@@ -552,10 +579,10 @@ function renderTable(rows) {
         <tr>
           <td>${formatDate(row.creado_en)}</td>
           ${qIds.map((id) => {
-            const val = row.respuestas?.[id];
-            if (val === undefined || val === null) return "<td>—</td>";
-            const safe = escapeHtml(val);
-            return `<td><span class="opt-badge"><span class="opt-dot" style="background:${colorFor(val)}"></span>${safe}</span></td>`;
+            const display = displayValue(row.respuestas?.[id]);
+            if (display === null) return "<td>—</td>";
+            const safe = escapeHtml(display);
+            return `<td><span class="opt-badge"><span class="opt-dot" style="background:${colorFor(display)}"></span>${safe}</span></td>`;
           }).join("")}
         </tr>
       `).join("")}
@@ -571,11 +598,9 @@ function renderCharts(rows) {
 
   qIds.forEach((qId) => {
     const counts = {};
-    rows.forEach((row) => {
-      const val = row.respuestas?.[qId];
-      if (val === undefined || val === null) return;
-      counts[val] = (counts[val] || 0) + 1;
-    });
+    rows.forEach((row) => addToCounts(counts, row.respuestas?.[qId]));
+
+    if (Object.keys(counts).length === 0) return;
 
     const card = document.createElement("div");
     card.className = "chart-card";
