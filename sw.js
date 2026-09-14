@@ -1,6 +1,6 @@
 // Nombre de la caché — súbelo (v2, v3...) cada vez que cambies estos archivos
 // para forzar que los dispositivos ya instalados bajen la versión nueva.
-const CACHE_NAME = "encuesta-cache-v7";
+const CACHE_NAME = "encuesta-cache-v8";
 
 const APP_SHELL = [
   "./",
@@ -12,7 +12,11 @@ const APP_SHELL = [
   "./icons/icon-512.png",
   "./icons/icon-512-maskable.png",
   "./assets/logo-anova.png",
-  "./assets/banner-anova.png"
+  "./assets/banner-anova.png",
+  "./favicon.ico",
+  "./assets/favicon-32.png",
+  "./assets/favicon-192.png",
+  "./assets/favicon-180.png"
 ];
 
 // Instala y guarda todo el "app shell" en caché para que cargue sin internet

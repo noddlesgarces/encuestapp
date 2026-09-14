@@ -327,6 +327,7 @@ function buildSteps() {
 
 function isStepAnswered(step) {
   if (step.tipo === "identificacion") return true; // opcional, nunca bloquea
+  if (step.requerida === false) return true; // opcional, no bloquea aunque esté vacía
   return isAnswered(step);
 }
 
